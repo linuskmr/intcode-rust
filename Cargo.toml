@@ -1,0 +1,9 @@
+[package]
+name = "intcode-rust"
+version = "0.1.0"
+authors = ["linus-k519 <56581587+linus-k519@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
