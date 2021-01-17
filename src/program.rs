@@ -1,5 +1,6 @@
 use crate::opcode::Opcode;
 use crate::mode::ModeList;
+use std::time::Instant;
 
 pub struct Program {
     /// The source code of the program.
@@ -18,10 +19,8 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Vec<i64>) -> Self {
-        let mut c = code;
-        c.resize(4096, 0);
         Program {
-            code: c,
+            code,
             ip: 0,
             move_ip: true,
             rel_base: 0,
@@ -32,6 +31,7 @@ impl Program {
 
     /// Executes this program
     pub fn exec(&mut self) {
+        let start_time = Instant::now();
         while !self.finish {
             self.move_ip = true;
 
@@ -59,6 +59,7 @@ impl Program {
                 self.ip += 1 + opcode.num_of_params;
             }
         }
+        println!("Execution took {:?}", start_time.elapsed())
     }
 
     /// Processes the mode_list into a list of indices of the parameters.
@@ -74,14 +75,16 @@ impl Program {
             let f = mode.function;
             self.arg_indices[i] = f(self, parameter_index);
         }
+        self.grow_code_if_necessary()
     }
 
-    pub fn get(&self, index: usize) -> i64 {
-        self.code[index]
-    }
-
-    pub fn set(&mut self, index: usize, value: i64) {
-        self.code[index] = value
+    /// Grows the code vector if a parameter index is out of range
+    fn grow_code_if_necessary(&mut self) {
+        let max = *self.arg_indices.iter().max().unwrap_or(&0);
+        if max >= self.code.len() {
+            println!("Grow code register from {} to {}", self.code.len(), max+1);
+            self.code.resize(max+1 + 42, 0);
+        }
     }
 }
 

@@ -48,12 +48,12 @@ fn no_op(_: &mut Program) {}
 
 /// Adds to numbers together and stores the result in the third parameter.
 fn add(p: &mut Program) {
-    p.set(p.arg_indices[2], p.get(p.arg_indices[0]) + p.get(p.arg_indices[1]))
+    p.code[p.arg_indices[2]] = p.code[p.arg_indices[0]] + p.code[p.arg_indices[1]]
 }
 
 /// Multiplies to numbers together and stores the result in the third parameter.
 fn multiply(p: &mut Program) {
-    p.set(p.arg_indices[2], p.get(p.arg_indices[0]) * p.get(p.arg_indices[1]))
+    p.code[p.arg_indices[2]] = p.code[p.arg_indices[0]] * p.code[p.arg_indices[1]]
 }
 
 
@@ -69,26 +69,26 @@ fn input(p: &mut Program) {
 
     // Parse line to number
     let trimmed_input = input_text.trim();
-    p.set(p.arg_indices[0], trimmed_input.parse().expect("failed to parse integer"));
+    p.code[p.arg_indices[0]] = trimmed_input.parse().expect("failed to parse integer");
 }
 
 /// Outputs the number of the first parameter.
 fn output(p: &mut Program) {
-    println!("Output: {}", p.get(p.arg_indices[0]));
+    println!("Output: {}", p.code[p.arg_indices[0]]);
 }
 
 /// Jumps to the position of the second parameter if the first parameter is non-zero.
 fn jump_non_zero(p: &mut Program) {
-    if p.get(p.arg_indices[0]) != 0 {
-        p.ip = p.get(p.arg_indices[1]) as usize;
+    if p.code[p.arg_indices[0]] != 0 {
+        p.ip = p.code[p.arg_indices[1]] as usize;
         p.move_ip = false;
     }
 }
 
 /// Jumps to the position of the second parameter if the first parameter is zero.
 fn jump_zero(p: &mut Program) {
-    if p.get(p.arg_indices[0]) == 0 {
-        p.ip = p.get(p.arg_indices[1]) as usize;
+    if p.code[p.arg_indices[0]] == 0 {
+        p.ip = p.code[p.arg_indices[1]] as usize;
         p.move_ip = false;
     }
 }
@@ -96,17 +96,17 @@ fn jump_zero(p: &mut Program) {
 /// Writes 1 to the third parameter if the first parameter is less than the second parameter.
 /// Otherwise writes 0.
 fn less_than(p: &mut Program) {
-    p.set(p.arg_indices[2], bool_to_int(p.get(p.arg_indices[0]) < p.get(p.arg_indices[1])));
+    p.code[p.arg_indices[2]] = bool_to_int(p.code[p.arg_indices[0]] < p.code[p.arg_indices[1]]);
 }
 
 /// Writes 1 to the third parameter if the first parameter is equal to the second parameter.
 /// Otherwise writes 0.
 fn equal(p: &mut Program) {
-    p.set(p.arg_indices[2], bool_to_int(p.get(p.arg_indices[0]) == p.get(p.arg_indices[1])));
+    p.code[p.arg_indices[2]] = bool_to_int(p.code[p.arg_indices[0]] == p.code[p.arg_indices[1]]);
 }
 
 fn add_relative_base(p: &mut Program) {
-    p.rel_base = p.get(p.arg_indices[0]);
+    p.rel_base += p.code[p.arg_indices[0]];
 }
 
 #[allow(dead_code)]
