@@ -1,4 +1,4 @@
-use crate::opcode::Opcode;
+use crate::opcode::Instruction;
 use crate::mode::ModeList;
 use std::time::Instant;
 
@@ -12,7 +12,7 @@ pub struct Program {
     /// The relative base register.
     pub rel_base: i64,
     /// The arguments for the current instruction.
-    pub arg_indices: Vec<usize>,
+    pub param_indices: Vec<usize>,
     /// Indicates whether the program is finished.
     pub finish: bool,
 }
@@ -24,7 +24,7 @@ impl Program {
             ip: 0,
             move_ip: true,
             rel_base: 0,
-            arg_indices: vec![],
+            param_indices: vec![],
             finish: false,
         }
     }
@@ -34,53 +34,52 @@ impl Program {
         let start_time = Instant::now();
         while !self.finish {
             self.move_ip = true;
-
             // Parse opcode, modes and matching indices for each parameter.
-            let opcode_number = self.code[self.ip];
-            if opcode_number == 99 {
+            let opcode = self.code[self.ip];
+            if opcode == 99 {
                 // End program
                 self.finish = true;
                 continue;
             }
-            let opcode = Opcode::new(opcode_number);
+            let instruction = Instruction::new(opcode);
+            let modes = ModeList::new(opcode, instruction.num_of_params);
+            self.get_param_indices(modes);
             // println!("Executing opcode {:?}", opcode);
-            let modes = ModeList::new(opcode_number, opcode.num_of_params);
             // println!("Modes {:?}", modes.0);
-            self.get_arg_indices(modes);
             // println!("Params {:?}", self.arg_indices);
 
-            // Execute function for opcode
-            let f = opcode.function;
-            f(self);
+            // Execute function for instruction
+            let instruction_function = instruction.compute_fn;
+            instruction_function(self);
 
             // Move the instruction pointer if desired
             if self.move_ip {
                 // Move instruction pointer by one for the opcode + the number of parameters
-                self.ip += 1 + opcode.num_of_params;
+                self.ip += 1 + instruction.num_of_params;
             }
         }
         println!("Execution took {:?}", start_time.elapsed());
     }
 
     /// Processes the mode_list into a list of indices of the parameters.
-    fn get_arg_indices(&mut self, modes: ModeList) {
+    fn get_param_indices(&mut self, modes: ModeList) {
         // Allocate vec for the parameters.
-        self.arg_indices = vec![0; modes.0.len()];
+        self.param_indices = vec![0; modes.0.len()];
         for (i, mode) in modes.0.iter().enumerate() {
-            // The index of the parameter is located at the instruction pointer + one place
-            // further back + the offset of parameters read before.
+            // The index of the parameter is located at the instruction pointer + one for the
+            // opcode + the offset of parameters read before.
             let parameter_index = self.ip + 1 + i;
             // Here the function for the current mode is executed, which returns the index of the
             // parameter.
-            let f = mode.function;
-            self.arg_indices[i] = f(self, parameter_index);
+            let f = mode.index_resolving_fn;
+            self.param_indices[i] = f(self, parameter_index);
         }
         self.grow_code_if_necessary()
     }
 
     /// Grows the code vector if a parameter index is out of range
     fn grow_code_if_necessary(&mut self) {
-        let max = *self.arg_indices.iter().max().unwrap_or(&0);
+        let max = *self.param_indices.iter().max().unwrap_or(&0);
         if max >= self.code.len() {
             println!("Expanded code register from {} to {}", self.code.len(), max+42);
             self.code.resize(max+42, 0);
@@ -100,7 +99,7 @@ mod tests {
             ip: 0,
             move_ip: true,
             rel_base: 0,
-            arg_indices: vec![0, 42, 6],
+            param_indices: vec![0, 42, 6],
             finish: false
         };
         // Try to access index 42, so grow vec to length >= 42+1
@@ -109,13 +108,13 @@ mod tests {
     }
 
     #[test]
-    fn test_get_arg_indices() {
+    fn test_get_param_indices() {
         let mut program = Program{
             code: vec![42, 2, 0, 0],
             ip: 0,
             move_ip: true,
             rel_base: 1,
-            arg_indices: vec![],
+            param_indices: vec![],
             finish: false
         };
         // Starting with ip = 1, because ip points to the opcode
@@ -123,7 +122,7 @@ mod tests {
         // Value 0 in immediate mode should result in index 2
         // Value 0 in relative base mode should result in index 1
         let modes = ModeList(vec![&MODES[0], &MODES[1], &MODES[2]]);
-        program.get_arg_indices(modes);
-        assert!(program.arg_indices >= vec![2, 2, 1]);
+        program.get_param_indices(modes);
+        assert!(program.param_indices >= vec![2, 2, 1]);
     }
 }

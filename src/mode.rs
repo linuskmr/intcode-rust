@@ -1,10 +1,19 @@
 use crate::program::Program;
 use std::fmt;
 
+// A mode of a parameter.
 pub struct Mode {
+    /// The name of this mode.
     name: &'static str,
-    pub function: fn(&mut Program, usize) -> usize
+    /// The function resolving the index of the parameter.
+    pub index_resolving_fn: fn(&mut Program, usize) -> usize,
 }
+
+pub const MODES: [Mode; 3] = [
+    Mode{name: "position mode", index_resolving_fn: position},
+    Mode{name: "immediate mode", index_resolving_fn: immediate},
+    Mode{name: "relative base mode", index_resolving_fn: relative_base}
+];
 
 impl fmt::Debug for Mode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -28,12 +37,6 @@ fn immediate(_: &mut Program, index: usize) -> usize {
 fn relative_base(program: &mut Program, index: usize) -> usize {
     (program.code[index] + program.rel_base) as usize
 }
-
-pub const MODES: [Mode; 3] = [
-    Mode{name: "position mode", function: position},
-    Mode{name: "immediate mode", function: immediate},
-    Mode{name: "relative base mode", function: relative_base}
-];
 
 pub struct ModeList(pub Vec<&'static Mode>);
 
@@ -64,7 +67,7 @@ mod tests {
             ip: 0,
             move_ip: true,
             rel_base: 0,
-            arg_indices: vec![],
+            param_indices: vec![],
             finish: false
         };
         assert_eq!(42, position(&mut program, 0));
@@ -77,7 +80,7 @@ mod tests {
             ip: 0,
             move_ip: true,
             rel_base: 0,
-            arg_indices: vec![],
+            param_indices: vec![],
             finish: false
         };
         assert_eq!(0, immediate(&mut program, 0));
@@ -90,7 +93,7 @@ mod tests {
             ip: 0,
             move_ip: true,
             rel_base: 42,
-            arg_indices: vec![],
+            param_indices: vec![],
             finish: false
         };
         assert_eq!(32, relative_base(&mut program, 0));
