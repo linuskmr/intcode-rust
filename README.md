@@ -9,7 +9,7 @@ The Intcode programming language was created in the [Advent of Code 2019](https:
 Clone this repository and compile it via
 
 ```bash
-cargo build
+cargo build --release
 ```
 
 ## Execution

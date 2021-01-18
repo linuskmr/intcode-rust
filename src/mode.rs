@@ -6,12 +6,6 @@ pub struct Mode {
     pub function: fn(&mut Program, usize) -> usize
 }
 
-/*impl fmt::Debug for Mode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Mode").field("name", &self.name).finish()
-    }
-}*/
-
 impl fmt::Debug for Mode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
@@ -35,14 +29,9 @@ fn relative_base(program: &mut Program, index: usize) -> usize {
     (program.code[index] + program.rel_base) as usize
 }
 
-const MODES: [Mode; 3] = [
-    // Position mode
+pub const MODES: [Mode; 3] = [
     Mode{name: "position mode", function: position},
-
-    // Immediate mode
     Mode{name: "immediate mode", function: immediate},
-
-    // Relative base mode
     Mode{name: "relative base mode", function: relative_base}
 ];
 
@@ -61,5 +50,49 @@ impl ModeList {
             mode_vec[i] = MODES.get(mode_number).expect("Invalid mode");
         }
         Self(mode_vec)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_position() {
+        let mut program = Program{
+            code: vec![42],
+            ip: 0,
+            move_ip: true,
+            rel_base: 0,
+            arg_indices: vec![],
+            finish: false
+        };
+        assert_eq!(42, position(&mut program, 0));
+    }
+
+    #[test]
+    fn test_immediate() {
+        let mut program = Program{
+            code: vec![42],
+            ip: 0,
+            move_ip: true,
+            rel_base: 0,
+            arg_indices: vec![],
+            finish: false
+        };
+        assert_eq!(0, immediate(&mut program, 0));
+    }
+
+    #[test]
+    fn test_relative_base() {
+        let mut program = Program{
+            code: vec![-10],
+            ip: 0,
+            move_ip: true,
+            rel_base: 42,
+            arg_indices: vec![],
+            finish: false
+        };
+        assert_eq!(32, relative_base(&mut program, 0));
     }
 }
